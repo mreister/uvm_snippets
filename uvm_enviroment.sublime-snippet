@@ -1,0 +1,195 @@
+<snippet>
+	<content><![CDATA[
+`ifndef TOP_ENV_SV
+`define TOP_ENV_SV
+
+import pk_syoscb::*;
+
+class top_env extends uvm_env;
+
+  `uvm_component_utils(top_env)
+
+  extern function new(string name, uvm_component parent);
+
+  // Reference model and Syosil scoreboard
+  typedef port_converter #(output_sum_numbers) converter_${3:name_of_agent}_inst_t;
+
+  converter_${3:name_of_agent}_inst_t m_converter_${3:name_of_agent}_inst;
+
+  /* Refrence Model */
+  ${1:name_of_refrence_model}        ${1:name_of_refrence_model}_inst;
+
+  /* Scorboard  */
+  cl_syoscb                         name_of_scoreboard_inst;     
+  cl_syoscb_cfg                     name_of_scoreboard_config_inst;         
+
+  /* Agent One  */
+  ${2:name_of_monitor}    ${2:name_of_monitor}_inst;  
+  ${3:name_of_agent}      ${3:name_of_agent}_inst;  
+  ${4:name_of_coverage}      ${4:name_of_coverage}_inst;
+
+  /* Agent Two  */   
+  ${5:name_of_second_monitor}        ${5:name_of_second_monitor}_inst;   
+  ${6:name_of_second_agent}        ${6:name_of_second_agent}_inst;  
+  ${7:name_of_second_coverage}        ${7:name_of_second_coverage}_inst;    
+
+  /* Top Level Configuration */
+  top_config              m_config;
+               
+  extern function void build_phase(uvm_phase phase);
+  extern function void connect_phase(uvm_phase phase);
+  extern task          run_phase(uvm_phase phase);
+
+  // You can insert code here by setting top_env_inc_inside_class in file common.tpl
+
+endclass : top_env 
+
+
+  function top_env::new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction : new
+
+
+  function void top_env::build_phase(uvm_phase phase);
+    `uvm_info(get_type_name(), "In build_phase", UVM_HIGH)
+  
+    if (!uvm_config_db #(top_config)::get(this, "", "config", m_config)) 
+      `uvm_error(get_type_name(), "Unable to get top_config")
+  
+    /*-------------------------------------------------------------------
+    -- Build the monitor use the configuration database to:
+    -- (1) Create the monitor object
+    -- (2) Assign the virtual interface from the configuration database to the monitor
+    -- (3) Get the Active or non-active state from the configuration database
+    -- (4) What is check enabled??
+    -- (5) Get converage enable from configuration
+    -----------------------------------------------------------------------*/
+    ${2:name_of_monitor}_inst                 = new("${2:name_of_monitor}_inst");         
+    ${2:name_of_monitor}_inst.vif             = m_config.${2:name_of_monitor}_vif;            
+    ${2:name_of_monitor}_inst.is_active       = m_config.is_active_${2:name_of_monitor};      
+    ${2:name_of_monitor}_inst.checks_enable   = m_config.checks_enable_${2:name_of_monitor};  
+    ${2:name_of_monitor}_inst.coverage_enable = m_config.coverage_enable_${2:name_of_monitor};
+  
+    uvm_config_db #(${2:name_of_monitor}_config)::set(this, "${3:name_of_agent}_inst", "config", ${2:name_of_monitor}_inst);
+    if (${2:name_of_monitor}_inst.is_active == UVM_ACTIVE )
+      uvm_config_db #(${2:name_of_monitor}_config)::set(this, "${3:name_of_agent}_inst.m_sequencer", "config", ${2:name_of_monitor}_inst);
+    uvm_config_db #(${2:name_of_monitor}_config)::set(this, "${4:name_of_coverage}_inst", "config", ${2:name_of_monitor}_inst);
+  
+  
+    /*-------------------------------------------------------------------
+    -- Build the monitor use the configuration database to:
+    -- (1) Create the monitor object
+    -- (2) Assign the virtual interface from the configuration database to the monitor
+    -- (3) Get the Active or non-active state from the configuration database
+    -- (4) What is check enabled??
+    -- (5) Get converage enable from configuration
+    -----------------------------------------------------------------------*/
+    ${5:name_of_second_monitor}_inst                 = new("${5:name_of_second_monitor}_inst");         
+    ${5:name_of_second_monitor}_inst.vif             = m_config.stim_adder_vif;            
+    ${5:name_of_second_monitor}_inst.is_active       = m_config.is_active_stim_adder;      
+    ${5:name_of_second_monitor}_inst.checks_enable   = m_config.checks_enable_stim_adder;  
+    ${5:name_of_second_monitor}_inst.coverage_enable = m_config.coverage_enable_stim_adder;
+  
+    uvm_config_db #(${5:name_of_second_monitor} )::set(this, "${6:name_of_second_agent}_inst", "config", ${5:name_of_second_monitor}_inst);
+    if (${5:name_of_second_monitor}_inst.is_active == UVM_ACTIVE )
+      uvm_config_db #(${5:name_of_second_monitor} )::set(this, "${6:name_of_second_agent}_inst.m_sequencer", "config", ${5:name_of_second_monitor}_inst);
+    uvm_config_db #(${5:name_of_second_monitor} )::set(this, "${7:name_of_second_coverage}_inst", "config", ${5:name_of_second_monitor}_inst);
+  
+  
+  
+    // Default factory overrides for Syosil scoreboard
+    cl_syoscb_queue::type_id::set_type_override(cl_syoscb_queue_std::type_id::get());
+  
+    begin
+      bit ok;
+      uvm_factory factory = uvm_factory::get();
+  
+      if (factory.find_override_by_type(cl_syoscb_compare_base::type_id::get(), "*") == cl_syoscb_compare_base::type_id::get())
+        cl_syoscb_compare_base::type_id::set_inst_override(cl_syoscb_compare_io_pretty::type_id::get(), "name_of_scoreboard_inst.*", this);
+  
+      
+      /*------------------------------------------------------------
+      -- Configure the scoreboard
+      ------------------------------------------------------------*/
+      name_of_scoreboard_config_inst = cl_syoscb_cfg::type_id::create("name_of_scoreboard_config_inst");
+      name_of_scoreboard_config_inst.set_queues( {"DUT", "REF"} );
+      ok = name_of_scoreboard_config_inst.set_primary_queue("DUT");
+      assert(ok);
+      ok = name_of_scoreboard_config_inst.set_producer("${3:name_of_agent}_inst", {"DUT", "REF"} );
+      assert(ok);
+  
+      /* Add the scoreboard to the config database */
+      uvm_config_db#(cl_syoscb_cfg)::set(this, "name_of_scoreboard_inst", "cfg", name_of_scoreboard_config_inst);
+  
+      /*------------------------------------------------------------------ 
+      -- Instantiate reference model and Syosil scoreboard
+      ------------------------------------------------------------------*/
+      ${1:name_of_refrence_model}_inst                 = ${1:name_of_refrence_model}                  ::type_id::create("${1:name_of_refrence_model}_inst", this);
+      m_converter_${3:name_of_agent}_inst = converter_${3:name_of_agent}_inst_t::type_id::create("m_converter_${3:name_of_agent}_inst", this);
+      name_of_scoreboard_inst           = cl_syoscb                        ::type_id::create("name_of_scoreboard_inst", this);
+    end
+  
+  
+    ${3:name_of_agent}_inst    = ${3:name_of_agent}  ::type_id::create("${3:name_of_agent}_inst", this);
+    ${4:name_of_coverage}_inst= ${4:name_of_coverage}::type_id::create("${4:name_of_coverage}_inst", this);
+  
+    ${6:name_of_second_agent}_inst       = ${6:name_of_second_agent}      ::type_id::create("${6:name_of_second_agent}_inst", this);
+    ${7:name_of_second_coverage}_inst    =  ${7:name_of_second_coverage}   ::type_id::create("${7:name_of_second_coverage}_inst", this);
+  
+  endfunction : build_phase
+
+
+  function void top_env::connect_phase(uvm_phase phase);
+    `uvm_info(get_type_name(), "In connect_phase", UVM_HIGH)
+  
+    ${3:name_of_agent}_inst.analysis_port.connect(${4:name_of_coverage}_inst);
+  
+    ${6:name_of_second_agent}_inst.analysis_port.connect(${7:name_of_second_coverage}_inst.analysis_export);
+  
+    begin
+      /*------------------------------------------------------------------ 
+      -- Connect reference model and Syosil scoreboard 
+      -------------------------------------------------------------------*/
+      cl_syoscb_subscriber subscriber;
+  
+      /* Connect the refrence model to the scoreboard */
+      ${6:name_of_second_agent}_inst.analysis_port.connect(${1:name_of_refrence_model}_inst.analysis_export_0);  
+      subscriber = name_of_scoreboard_inst.get_subscriber("REF", "${3:name_of_agent}_inst");
+
+      /* Connect the Device Under Test (DUT) model to the scoreboard */
+      ${1:name_of_refrence_model}_inst.analysis_port_0.connect(subscriber.analysis_export);  
+      subscriber = name_of_scoreboard_inst.get_subscriber("DUT", "${3:name_of_agent}_inst");
+
+      /*------------------------------------------------------------
+      --  Connect the convert model to connect the agent and scoreboard together... i forget exactly why this is needed.... 
+      ------------------------------------------------------------*/
+      ${3:name_of_agent}_inst.analysis_port.connect(m_converter_${3:name_of_agent}_inst.analysis_export);
+      m_converter_${3:name_of_agent}_inst.analysis_port.connect(subscriber.analysis_export);
+    end
+  
+  endfunction : connect_phase
+
+  /* */
+  task top_env::run_phase(uvm_phase phase);
+    top_default_seq vseq;
+    vseq = top_default_seq::type_id::create("vseq");
+    vseq.set_item_context(null, null);
+
+    /* Randomizer the virtual sequence*/
+    if ( !vseq.randomize() )
+      `uvm_fatal(get_type_name(), "Failed to randomize virtual sequence")
+    vseq.${3:name_of_agent}_inst = ${3:name_of_agent}_inst;
+    vseq.${6:name_of_second_agent}_inst    = ${6:name_of_second_agent}_inst;   
+    vseq.set_starting_phase(phase);
+    vseq.start(null);
+  
+  endtask : run_phase
+
+`endif // TOP_ENV_SV
+
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>uvm_enviroment</tabTrigger> 
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.systemverilog</scope> 
+</snippet>

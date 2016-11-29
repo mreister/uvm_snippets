@@ -1,0 +1,46 @@
+<snippet>
+	<content><![CDATA[
+`ifndef NAME_OF_SEQUENCE_SV
+`define NAME_OF_SEQUENCE_SV
+
+class ${TM_FILENAME/(.*)[.](.*)/$1/g}  extends uvm_sequence #(${2:uvm_sequence_item_to_user});
+
+  `uvm_object_utils(${TM_FILENAME/(.*)[.](.*)/$1/g} )
+
+  /*-------------------------------------------------------------------------------
+  -- Functions external definitions
+  -------------------------------------------------------------------------------*/
+  extern function new(string name = "");
+  extern task body();
+
+endclass : ${TM_FILENAME/(.*)[.](.*)/$1/g} 
+
+  /*-------------------------------------------------------------------------------
+  -- Constructor
+  -------------------------------------------------------------------------------*/
+  function ${TM_FILENAME/(.*)[.](.*)/$1/g} ::new(string name = "");
+    super.new(name);
+  endfunction : new
+
+  /*-------------------------------------------------------------------------------
+  -- Main function to create transactions.
+  -------------------------------------------------------------------------------*/
+  task ${TM_FILENAME/(.*)[.](.*)/$1/g} ::body();
+    req = ${2:uvm_sequence_item_to_user}::type_id::create("req");
+    start_item(req); 
+    if ( !req.randomize() )
+      `uvm_error(get_type_name(), "Failed to randomize transaction")
+    finish_item(req); 
+  endtask : body
+
+`endif // ${TM_FILENAME/(.*)[.](.*)/$1/g}
+
+
+
+
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>uvm_sequence</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.systemverilog</scope> 
+</snippet>

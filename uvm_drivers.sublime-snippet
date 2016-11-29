@@ -1,0 +1,53 @@
+<snippet>
+	<content><![CDATA[
+`ifndef STIM_ADDER_DRIVER_SV
+`define STIM_ADDER_DRIVER_SV
+
+class stim_adder_driver extends uvm_driver #(${2:snippet});
+
+  `uvm_component_utils(stim_adder_driver)
+
+  virtual ${3:interface_type} virtual_interface;
+
+  extern function new(string name, uvm_component parent);
+  extern task run_phase(uvm_phase phase);
+  extern task do_drive();
+
+endclass : stim_adder_driver 
+
+  /*--------------------------------------------------------------------------
+  -- 
+  -------------------------------------------------------------------------*/
+  function stim_adder_driver::new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction : new
+
+  /*--------------------------------------------------------------------------
+  -- 
+  -------------------------------------------------------------------------*/
+  task stim_adder_driver::run_phase(uvm_phase phase);
+    forever
+    begin
+      seq_item_port.get_next_item(req);
+        
+      do_drive();
+
+      seq_item_port.item_done();
+    end
+  endtask : run_phase
+
+  /*--------------------------------------------------------------------------
+  -- 
+  -------------------------------------------------------------------------*/
+  task stim_adder_driver::do_drive();
+    virtual_interface.input_a = ${2:snippet}.input_a;
+    virtual_interface.input_b = ${2:snippet}.input_b;
+  endtask : do_drive
+
+`endif // STIM_ADDER_DRIVER_SV
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>uvm_driver</tabTrigger> 
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.systemverilog</scope> 
+</snippet>

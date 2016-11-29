@@ -1,0 +1,139 @@
+<snippet>
+	<content><![CDATA[
+`ifndef NAME_OF_SEQ_ITEM_SV
+`define NAME_OF_SEQ_ITEM_SV
+
+class ${TM_FILENAME/(.*)[.](.*)/$1/g} extends uvm_sequence_item 
+	/*-------------------------------------------------------------------------------
+	-- UVM Factory register
+	-------------------------------------------------------------------------------*/
+	// Provide implementations of virtual methods such as get_type_name and create
+	`uvm_object_utils(${TM_FILENAME/(.*)[.](.*)/$1/g})
+
+	/*-------------------------------------------------------------------------------
+	-- UVM Transaction Variables
+	-------------------------------------------------------------------------------*/
+	rand logic[7:0]  ${2:input_a};
+    rand logic[7:0]  ${3:input_b};
+
+	/*-------------------------------------------------------------------------------
+	-- Functions external definitions
+	-------------------------------------------------------------------------------*/
+	extern function new(string name = "");
+	extern function void do_copy(uvm_object rhs);
+	extern function bit  do_compare(uvm_object rhs, uvm_comparer comparer);
+	extern function void do_print(uvm_printer printer);
+	extern function void do_record(uvm_recorder recorder);
+	extern function void do_pack(uvm_packer packer);
+	extern function void do_unpack(uvm_packer packer);
+	extern function string convert2string();
+	
+endclass : ${TM_FILENAME/(.*)[.](.*)/$1/g}
+
+	/*-------------------------------------------------------------------------------
+	-- Constructor
+	-------------------------------------------------------------------------------*/
+	function ${TM_FILENAME/(.*)[.](.*)/$1/g}::new(string name = "");
+	  super.new(name);
+	endfunction : new
+	
+	/*-------------------------------------------------------------------------------------------------------------------------
+	-- do_copy(uvm_object rhs)
+	-- The purpose of the do_copy method is to provide a means of making a deep copy* of a data object. The do_copy
+	-- method is either used on its own or via the uvm_objects clone() method which allows independent duplicates of a data
+	-- object to be created.
+	--------------------------------------------------------------------------------------------------------------------------*/
+	function void ${TM_FILENAME/(.*)[.](.*)/$1/g}::do_copy(uvm_object rhs);
+	  ${TM_FILENAME/(.*)[.](.*)/$1/g} rhs_;
+	  if (!$cast(rhs_, rhs))
+	    `uvm_fatal(get_type_name(), "Cast of rhs object failed")
+	  super.do_copy(rhs);
+	  ${2:input_a} = rhs_.${2:input_a};
+	  ${3:input_b} = rhs_.${3:input_b};
+	endfunction : do_copy
+	
+	/*------------------------------------------------------------------------------------------------------------------------
+	-- do_compare(uvm_object rhs, uvm_comparer comparer)
+	-- The do_compare method is called by the uvm_object compare() method and it is used to compare two data objects of the
+	-- same type to determine whether their contents are equal. The do_compare() method should only be coded for those
+	-- properties which can be compared.
+	--------------------------------------------------------------------------------------------------------------------------*/
+	function bit ${TM_FILENAME/(.*)[.](.*)/$1/g}::do_compare(uvm_object rhs, uvm_comparer comparer);
+	  bit result;
+	  ${TM_FILENAME/(.*)[.](.*)/$1/g} rhs_;
+	  if (!$cast(rhs_, rhs))
+	    `uvm_fatal(get_type_name(), "Cast of rhs object failed")
+	  result = super.do_compare(rhs, comparer);
+	  result &= comparer.compare_field("${2:input_a}", ${2:input_a}, rhs_.${2:input_a}, $bits(${2:input_a}));
+	  result &= comparer.compare_field("${3:input_b}", ${3:input_b}, rhs_.${3:input_b}, $bits(${3:input_b}));
+	  return result;
+	endfunction : do_compare
+	
+	/*-------------------------------------------------------------------------------
+	-- The do_print() method is called by the uvm_object print() method. Its original purpose was to print out a string
+	-- representation of an uvm data object using one of the uvm_printer policy classes.
+	-------------------------------------------------------------------------------*/
+	function void ${TM_FILENAME/(.*)[.](.*)/$1/g}::do_print(uvm_printer printer);
+	  if (printer.knobs.sprint == 0)
+	    `uvm_info(get_type_name(), convert2string(), UVM_MEDIUM)
+	  else
+	    printer.m_string = convert2string();
+	endfunction : do_print
+	
+	
+	/*-------------------------------------------------------------------------------
+	-- The do_record() method is intended to support the viewing of data objects as transactions in a waveform GUI. Like
+	-- the printing data object methods, the principle is that the fields that are recorded are visible in the transaction viewer. The
+	-- underlying implementation of the `uvm_record_field macro used in the do_record() method is simulator specific and for
+	-- Questa involves the use of the $add_attribute() system call:
+	-------------------------------------------------------------------------------*/
+	function void ${TM_FILENAME/(.*)[.](.*)/$1/g}::do_record(uvm_recorder recorder);
+	  super.do_record(recorder);
+	  // Use the record macros to record the item fields:
+	  `uvm_record_field("${2:input_a}", ${2:input_a})
+	  `uvm_record_field("${3:input_b}", ${3:input_b})
+	endfunction : do_record
+		
+	/*-------------------------------------------------------------------------------
+	-- These two methods are not commonly used and their purpose is to convert a data object into a bit stream (i.e. an integer)
+	-- to allow a representation to be passed between language domains, for instance between SystemVerilog and C/C++.
+	-------------------------------------------------------------------------------*/
+	function void ${TM_FILENAME/(.*)[.](.*)/$1/g}::do_pack(uvm_packer packer);
+	  super.do_pack(packer);
+	  `uvm_pack_int(${2:input_a}) 
+	  `uvm_pack_int(${3:input_b}) 
+	endfunction : do_pack
+	
+	/*-------------------------------------------------------------------------------
+	-- These two methods are not commonly used and their purpose is to convert a data object into a bit stream (i.e. an integer)
+	-- to allow a representation to be passed between language domains, for instance between SystemVerilog and C/C++.
+	-------------------------------------------------------------------------------*/
+	function void ${TM_FILENAME/(.*)[.](.*)/$1/g}::do_unpack(uvm_packer packer);
+	  super.do_unpack(packer);
+	  `uvm_unpack_int(${2:input_a}) 
+	  `uvm_unpack_int(${3:input_b}) 
+	endfunction : do_unpack
+
+	/*-------------------------------------------------------------------------------
+	-- In order to get debug or status information printed to a simulator transcript or a log file from a data object there needs to
+	-- be a way to convert the objects contents into a string representation - this is the purpose of the convert2string() method.
+	-- Calling the method will return a string detailing the values of each of the properties formatted for transcript display or for
+	-- writing to a file. The format is determined by the user:
+	-------------------------------------------------------------------------------*/
+	function string ${TM_FILENAME/(.*)[.](.*)/$1/g}::convert2string();
+	  string s;
+	  $sformat(s, "%s\n", super.convert2string());
+	  $sformat(s, {"%s\n",
+	    "${2:input_a} = 'h%0h  'd%0d\n", 
+	    "${3:input_b} = 'h%0h  'd%0d\n"},
+	    get_full_name(), ${2:input_a}, ${2:input_a}, ${3:input_b}, ${3:input_b});
+	  return s;
+	endfunction : convert2string
+
+`endif 
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>uvm_seq_item</tabTrigger> 
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.systemverilog</scope> 
+</snippet>

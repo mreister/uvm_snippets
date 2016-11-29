@@ -1,0 +1,104 @@
+<snippet>
+	<content><![CDATA[
+`ifndef STIM_ADDER_AGENT_SV
+`define STIM_ADDER_AGENT_SV
+
+class stim_adder_agent extends uvm_agent;
+
+  `uvm_component_utils(stim_adder_agent)
+
+  uvm_analysis_port #(${2:sequence_item}) analysis_port;
+
+
+  ${3:name_of_config}       ${3:name_of_config}_inst;
+  ${4:name_of_sequencer}    ${4:name_of_sequencer}_inst;
+  ${5:name_of_driver}       ${5:name_of_driver}_inst;
+  ${6:name_of_monitor}      ${6:name_of_monitor}_inst;
+
+  local int m_is_active = -1;
+
+  extern function new(string name, uvm_component parent);
+  extern function void build_phase(uvm_phase phase);
+  extern function void connect_phase(uvm_phase phase);
+  extern function uvm_active_passive_enum get_is_active();
+
+endclass : stim_adder_agent 
+
+  /*--------------------------------------------------------------------------
+  -- 
+  -------------------------------------------------------------------------*/
+  function  stim_adder_agent::new(string name, uvm_component parent);
+    super.new(name, parent);
+    analysis_port = new("analysis_port", this);
+  endfunction : new
+  
+  /*--------------------------------------------------------------------------
+  -- 
+  -- Build the MONITOR, DRIVER, SEQUENCER
+  -------------------------------------------------------------------------*/  
+  function void stim_adder_agent::build_phase(uvm_phase phase);
+    if (!uvm_config_db #(stim_adder_config)::get(this, "", "config", ${3:name_of_config}_inst))
+      `uvm_error(get_type_name(), "stim_adder config not found")
+
+    ${6:name_of_monitor}_inst     = ${6:name_of_monitor}     ::type_id::create("${6:name_of_monitor}_inst", this);
+    
+    if (get_is_active() == UVM_ACTIVE)
+    begin
+      ${5:name_of_driver}_inst    = ${5:name_of_driver}      ::type_id::create("${5:name_of_driver}_inst", this);
+      ${4:name_of_sequencer}_inst = name_of_sequencer::type_id::create("${4:name_of_sequencer}_inst", this);
+    end
+  
+  endfunction : build_phase
+  
+  /*--------------------------------------------------------------------------
+  -- 
+  -- Connect the monitor and analysis port
+  -- Connect the MONITOR, DRIVER, SEQUENCER
+  -------------------------------------------------------------------------*/
+  function void stim_adder_agent::connect_phase(uvm_phase phase);
+    if (${3:name_of_config}_inst.vif == null)
+      `uvm_warning(get_type_name(), "stim_adder virtual interface is not set!")
+  
+    ${6:name_of_monitor}_inst.vif = ${3:name_of_config}_inst.vif;
+    ${6:name_of_monitor}_inst.analysis_port.connect(analysis_port);
+  
+    if (get_is_active() == UVM_ACTIVE)
+    begin
+      ${5:name_of_driver}_inst.seq_item_port.connect(${4:name_of_sequencer}_inst.seq_item_export);
+      ${5:name_of_driver}_inst.vif = ${3:name_of_config}_inst.vif;
+    end
+  endfunction : connect_phase
+
+  /*--------------------------------------------------------------------------
+  -- 
+  -- Returns UVM_ACTIVE is the agent is acting as an active agent and UVM_PASSIVE 
+  -- if it is acting as a passive agent.  The default implementation is to just return 
+  -- the is_active flag, but the component developer may override this behavior if a more 
+  -- complex algorithm is needed to determine the active/passive nature of the agent.
+  -------------------------------------------------------------------------*/
+  function uvm_active_passive_enum stim_adder_agent::get_is_active();
+    if (m_is_active == -1)
+    begin
+      if (uvm_config_db#(uvm_bitstream_t)::get(this, "", "is_active", m_is_active))
+      begin
+        if (m_is_active != ${3:name_of_config}_inst.is_active)
+          `uvm_warning(get_type_name(), "is_active field in config_db conflicts with config object")
+      end
+      else 
+        m_is_active = ${3:name_of_config}_inst.is_active;
+    end
+    return uvm_active_passive_enum'(m_is_active);
+  endfunction : get_is_active
+
+`endif // STIM_ADDER_AGENT_SV
+
+
+
+
+
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>uvm_agent</tabTrigger> 
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.systemverilog</scope> 
+</snippet>
